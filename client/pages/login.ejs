@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <title>德辰文件管理系统-登录</title>
+    <meta charset="utf8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <link rel="stylesheet" type="text/css" href="/src/login/login.css">
+</head>
+
+<body>
+    <div class="container">
+        <!--导航-->
+        <div class="hidden-xs middle-logo"></div>
+        <nav>
+            <ul class="nav nav-decoration">
+                <li class="active"><a href="#">登录</a></li>
+                <li><a href="#" data-toggle="modal" data-target=".regist-refused">注册</a></li>
+            </ul>
+            <div class="nav-logo">
+                <span>德辰文件管理系统</span>
+            </div>
+
+            <!--无法注册弹出框-->
+            <div class="modal fade regist-refused" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel">
+                <div class="modal-dialog modal-sm" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                            <h4 class="modal-title" id="myModalLabel">无法注册</h4>
+                            <div class="modal-body">
+                                <p>暂不支持注册操作！</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">确定</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <main>
+            <div class="text-center">
+                <div class="login-logo"></div>
+                <div class="info-input">
+                    <i class="glyphicon glyphicon-blackboard info-input-icon"></i>
+                    <input id="group" class="info-input-box" placeholder="组  名" maxlength="12">
+                </div>
+                <div class="info-input">
+                    <i class="glyphicon glyphicon-user info-input-icon"></i>
+                    <input id="username" class="info-input-box" placeholder="用户名" maxlength="6">
+                </div>
+                <div class="info-input">
+                    <i class="glyphicon glyphicon-lock info-input-icon"></i>
+                    <input id="password" type="password" class="info-input-box" placeholder="密  码" maxlength="18">
+                </div>
+                <div class="info-switch">
+                    <lable class="info-switch-key" for="rememberMe">记住我</lable>
+                    <input type="checkbox" class="btn-switch info-switch-box" id="rememberMe">
+                </div>
+                <button type="button" id="btnLogin" data-loading-text="..." class="btn btn-main" autocomplete="off">
+                    登录
+                </button>
+            </div>
+        </main>
+
+
+    </div>
+
+    <!--隐藏域，用于登录成功已经获取token后跳转至主页面-->
+    <form action="/main/index" method="POST" class="hidden" name="login"></form>
+    <script src="/lib/requirejs/require.js" data-main="/src/login/login.js"></script>
+</body>
+
+</html>

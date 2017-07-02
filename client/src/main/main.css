@@ -1,0 +1,196 @@
+@import "/lib/bootstrap/css/bootstrap.min.css";
+@import "/lib/toastr/toastr.min.css";
+@import "/src/common/common.css";
+
+/*页面样式*/
+*{
+  font-family: "Microsoft Yahei";
+}
+nav{
+  height:47px;
+  border-bottom: 1px solid #ddd;
+  position: relative;
+}
+.container{
+  height: 100%;
+  border-left: 1px solid #D3D3D3;
+  border-right: 1px solid #D3D3D3;
+}
+.middle-logo{
+  margin: 0 auto;
+  width: 0;
+  height: 0;
+  border-left: 50px solid transparent;
+  border-right: 50px solid transparent;
+  border-top: 70px solid #0271BC;
+}
+.nav-logo{
+  position: absolute;
+  right: 0;
+  top: 0;
+  overflow: hidden;
+  height: 47;
+  line-height: 47px;
+  font-size: 18px;
+  color: #0271BC;
+}
+
+/*文件夹栏*/
+.directory-bar{
+  border-bottom: 1px solid #D3D3D3;
+  padding: 5px 0;
+}
+.dir-back{
+  display: inline-block;
+  font-size: 12px;
+  padding-right: 10px;
+  margin-right: 20px;
+  height: 30px;
+  line-height: 30px;
+}
+.dir-all{
+  display: inline-block;
+  height: auto;
+  line-height: 30px;
+  width: 80%;
+  border-right: 1px solid #D3D3D3;
+  border-left: 1px solid #D3D3D3;
+  padding-left: 10px;
+}
+@media(max-width:768px){
+  .dir-all{
+    width: auto;
+    border: none;
+  }
+}
+.dir-one,.dir-root{
+  font-size: 12px;
+  display: inline-block;
+}
+
+.dir-name-arrow{
+  font-size: 10px;
+  margin: 0 2px;
+  color: #AAA;
+}
+.dir-current,.dir-current:hover,.dir-current:focus,
+.dir-back-noback,.dir-back-noback:hover,.dir-back-noback:focus{
+  cursor: not-allowed;
+  color: #333;
+  text-decoration: none;
+  cursor: default;
+}
+
+/*下载按钮*/
+.btn-downFile {
+  color: #FFF;
+  background-color: #4992f4;
+  border-color: #4992f4;
+  height: 30px;
+  width: 100px;
+  font-size: 13px;
+  transition: all .2s;
+}
+ @media(max-width : 768px){
+     .btn-downFile{
+         height: 30px;
+         display: block;
+         width: 100px;
+         margin: 5px 0 0 0;
+     }
+ }
+.btn-downFile:focus,
+.btn-downFile.focus {
+  color: #FFF;
+  background-color: #0271BC;
+  border-color: #0271BC;
+}
+.btn-downFile:hover {
+  color: #FFF;
+  background-color: #0271BC;
+  border-color: #0271BC  ;
+}
+.btn-downFile:active,
+.btn-downFile.active,
+.open > .dropdown-toggle.btn-downFile {
+  color: #fff;
+  background-color: #286090;
+  border-color: #204d74;
+}
+.btn-downFile:active:hover,
+.btn-downFile.active:hover,
+.open > .dropdown-toggle.btn-downFile:hover,
+.btn-downFile:active:focus,
+.btn-downFile.active:focus,
+.open > .dropdown-toggle.btn-downFile:focus,
+.btn-downFile:active.focus,
+.btn-downFile.active.focus,
+.open > .dropdown-toggle.btn-downFile.focus {
+  color: #fff;
+  background-color: #204d74;
+  border-color: #122b40;
+}
+.btn-downFile:active,
+.btn-downFile.active,
+.open > .dropdown-toggle.btn-downFile {
+  background-image: none;
+}
+.btn-downFile.disabled:hover,
+.btn-downFile[disabled]:hover,
+fieldset[disabled] .btn-downFile:hover,
+.btn-downFile.disabled:focus,
+.btn-downFile[disabled]:focus,
+fieldset[disabled] .btn-downFile:focus,
+.btn-downFile.disabled.focus,
+.btn-downFile[disabled].focus,
+fieldset[disabled] .btn-downFile.focus {
+  background-color: #337ab7;
+  border-color: #2e6da4;
+}
+.btn-downFile .badge {
+  color: #337ab7;
+  background-color: #fff;
+}
+
+
+
+
+/*文件样式*/
+.file-all{
+  overflow-y: scroll
+}
+.file-one{
+  float: left;
+  width: 85px;
+  height: auto;
+  margin: 5px;
+  padding: 5px;
+  text-align: center;
+  cursor: default;
+  color: #333;
+  user-select: none;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  transition: all .2s;
+}
+
+.file-one,.file-one:hover{
+  text-decoration: none;
+}
+.file-ico{
+  height: 50px;
+  width: 50px;
+  display: block;
+  margin: 0 auto;
+}
+.file-name{
+  display: block;
+  width: 80px;  
+  font-size: 12px;
+  word-break: break-all;
+}
+.file-one.file-selected{
+  color: #FFF;
+  background: #4C9ED9;
+}

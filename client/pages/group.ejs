@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ch-ZN">
+
+<head>
+    <title>主页-组管理</title>
+    <meta charset="utf8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <link rel="stylesheet" type="text/css" href="/src/group/group.css">
+</head>
+
+<body>
+    <div class="container">
+        <!--头部-->
+        <header>
+            <div class="hidden-xs middle-logo"></div>
+            <nav>
+                <ul class="nav nav-decoration">
+                    <% modules.forEach(function(module){ %>
+                        <li class="<%=module.active=='active'?'active':''%>">
+                            <a href="<%=module.href%>">
+                                <%=module.name%>
+                            </a>
+                        </li>
+                        <% }) %>
+                </ul>
+                <div class="nav-logo hidden-xs">
+                    <span>德辰云文件</span>
+                </div>
+            </nav>
+        </header>
+        <!--/头部结束-->
+
+
+        <!--主要部分-->
+        <main>
+            
+
+        </main>
+        <!--/主要部分结束-->
+
+    </div>
+
+    <script src="/lib/requirejs/require.js" data-main="/src/group/group.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <title>主页-文件管理</title>
+    <link rel="stylesheet" type="text/css" href="/src/main/main.css">
+</head>
+
+<body>
+    <div class="container">
+        <!--头部-->
+        <header>
+            <div class="hidden-xs middle-logo"></div>
+            <nav>
+                <ul class="nav nav-decoration">
+                    <% modules.forEach(function(module){ %>
+                        <li class="<%=module.active=='active'?'active':''%>">
+                            <a href="<%=module.href%>">
+                                <%=module.name%>
+                            </a>
+                        </li>
+                        <% }) %>
+                </ul>
+                <div class="nav-logo hidden-xs">
+                    <span>德辰云文件</span>
+                </div>
+            </nav>
+        </header>
+        <!--/头部结束-->
+
+        <!--主要部分-->
+        <main>
+            <div class="directory-bar">
+                <a href="#" class="dir-back dir-back-noback">返回上一级</a>
+                <div class="dir-all">
+                    <a href="#" class="dir-current dir-root">全部文件</a>
+                </div>
+                <button class="btn btn-downFile" id="btnDownFile">下载</button>
+            </div>
+            <div class="file-all"></div>
+        </main>
+        <!--/主要部分结束-->
+    </div>
+
+    <script src="/lib/requirejs/require.js" data-main="/src/main/main.js"></script>
+</body>
+
+</html>
