@@ -114,7 +114,6 @@ async function setReqRootDir(req, res, next) {
  * 获取文件目录下所有文件，并返回给浏览器端口
  */
 async function getDir(req, res) {
-    res.set({ 'content-type': 'appliction/octet-stream' });
     let logModel = { logTitle: '获取文件列表', logMsg: 'getFileList_success', pcsName: '/main/getDir', errStatus: 0 };
     try {
         let dir = req.body.dir;
@@ -157,6 +156,7 @@ async function getDir(req, res) {
  * 下载文件的路由，多个下载给浏览器返回zip文件
  */
 async function downFiles(req, res) {
+    res.set({ 'content-type': 'appliction/octet-stream' });
     let ziper = archiver('zip', { level: 9 });
     let fileLinks = JSON.parse(req.body.fileLinks);
     res.set({ 'content-disposition': `attachment;filename*=UTF-8''${encodeURI('打包下载.zip')}` });
@@ -179,6 +179,7 @@ async function downFiles(req, res) {
  * 浏览器下载单个文件
  */
 async function downSingleFile(req, res) {
+    res.set({ 'content-type': 'appliction/octet-stream' });
     let realFileName = path.join(req.userInfo.rootDir, '/', decodeURI(req.url));
     express.static(path.dirname(realFileName))(req, res);
 }
