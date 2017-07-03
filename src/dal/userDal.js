@@ -125,13 +125,30 @@ async function selectGroupCount(groupNo) {
 
 /**
  * 修改用户密码
- * @param {Number} userId 用户id
- * @param {String} pass 密码
+ * @param {Object} model 必要参数: userId   可选参数
  */
-async function updatePass(userId, pass) {
+async function updateUser(model) {
     let conn = await pool.getConn();
-    let cmd = 'UPDATE TABLE t_user SET password=? WHERE user_id=?';
-    let params = [userId, pass];
+    let cmd = 'UPDATE TABLE t_user SET {fields} WHERE user_id=?';
+    let fields = [];
+    let params = [];
+    if (model.password) {
+        fields.push(' password=? ');
+        params.push(model.password);
+    }
+    if (model.perLV === 0 || model.perLV) {
+        fields.push(' per_lv=? ');
+        params.push(model.perLV);
+    }
+
+    if (params.length === 0) {
+        return;
+    }
+    else {
+        cmd = cmd.replace('{fields}', fields.join(' , '));
+        params.push(model.userId);
+    }
+
     let ret = (await conn.query(cmd, params))[0].affectRows;
     await conn.release();
     return ret;

@@ -1,7 +1,7 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
-const archiver = require('node-archiver');
+const archiver = require('archiver');
 const fsExt = require('./../src/node-extend/fs');
 const groupDal = require('./../src/dal/groupDal');
 const userDal = require('./../src/dal/userDal');
@@ -15,6 +15,7 @@ module.exports = router;
 
 router.use(tokenConfirm)
 router.use('/index', Index);
+router.use('/group/getAllUsers', getAllUsers);
 router.use('/group', adminConfirm, Group);
 router.use('/getDir', setReqRootDir, getDir);
 router.use('/downFiles', setReqRootDir, downFiles);
@@ -98,6 +99,33 @@ async function Group(req, res) {
             { name: '映射', href: '/main/reflect' }
         ]
     })
+}
+
+/**
+ * 或缺该组下的所有用户
+ */
+async function getAllUsers(req, res) {
+    let logModel = { logTitle: '获取组下用户列表', logMsg: 'getAllUsers_success', pcsName: '/main/group/getAllUsers', errStatus: 0 };
+    try {
+        let userList = await userDal.selectGroup(req.userInfo.groupNo);
+        userList.forEach((userInfo) => userInfo.password = 'hello world')
+        res.end(JSON.stringify({
+            result: 'getAllUsers_success',
+            userList: userList
+        }))
+        console.log(JSON.stringify({
+            result: 'getAllUsers_success',
+            userList: userList
+        }));
+        logDal.insertRow(logModel);
+    }
+    catch (e) {
+        logModel.logMsg = 'getAllUsers_failed';
+        logModel.errStatus = -1;
+        res.end(JSON.stringify({ result: e.message }));
+        logDal.insertRow(logModel);
+    }
+
 }
 
 /**

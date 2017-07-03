@@ -88,7 +88,7 @@ fieldset[disabled] .btn-delete.focus {
 }
 
 
-.user-update,.user-update:hover{
+.user-input,.user-input:hover{
   border: none;
   color: #000;
   font-style: normal;
@@ -98,7 +98,11 @@ fieldset[disabled] .btn-delete.focus {
   text-align: center;
 }
 
+.user-unsave,.user-unsave .user-input{
+  background:#F3F3F3;
+  border-color: #000;
+}
 
-.user-tr-unsave{
-  background:#BF9F7F;
+.user-status{
+  font-weight: bold;
 }
