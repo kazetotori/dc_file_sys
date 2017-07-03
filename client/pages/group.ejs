@@ -33,8 +33,26 @@
 
         <!--主要部分-->
         <main>
-            
-
+            <div class="text-center user-oprt-container">
+                <a href="#" class="user-oprt" id="addUser"><i class="glyphicon glyphicon-plus"></i></a>
+                <a href="#" class="user-oprt" id="deleteUser"><i class="glyphicon glyphicon-remove"></i></a>
+                <a href="#" class="user-oprt" id="saveUser"> <i class="glyphicon glyphicon-ok"></i> </a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-bordered text-center" id="tblUsers">
+                    <thead>
+                        <tr class="text-center">
+                            <td><input type="checkbox" id="checkAllUsers"></td>
+                            <td>用户名</td>
+                            <td>密码</td>
+                            <td>权限等级</td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!--这里存放主要的数据-->
+                    </tbody>
+                </table>
+            </div>
         </main>
         <!--/主要部分结束-->
 

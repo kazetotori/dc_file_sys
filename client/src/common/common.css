@@ -297,3 +297,11 @@ fieldset[disabled] .btn-main.focus {
   color: #337ab7;
   background-color: #fff;
 }
+
+
+.horizon-cutline{
+  height: 0;
+  width: 95%;
+  border-bottom: 1px solid #D3D3D3;
+  margin: 0 auto;
+}

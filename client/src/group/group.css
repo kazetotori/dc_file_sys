@@ -1,4 +1,104 @@
 @import "/lib/bootstrap/css/bootstrap.min.css";
 @import "/lib/toastr/toastr.min.css";
+@import "/lib/bootstrap3-editable/css/bootstrap-editable.css";
 @import "/src/common/common.css";
 @import "/src/main/main.css";
+
+
+.btn-delete {
+  color: #FFF;
+  background-color: #fb3737;
+  border-color: #fb3737;
+  border-radius: 0;
+  height: 40px;
+  width: 80px;
+  float: right;
+  font-size: 13px;
+  transition: all .2s;
+}
+.btn-delete:focus,
+.btn-delete.focus {
+  color: #FFF;
+  background-color: #f40000;
+  border-color: #f40000;
+}
+.btn-delete:hover {
+  color: #FFF;
+  background-color: #f40000;
+  border-color: #f40000  ;
+}
+.btn-delete:active,
+.btn-delete.active,
+.open > .dropdown-toggle.btn-delete {
+  color: #fff;
+  background-color: #f40000;
+  border-color: #f40000;
+}
+.btn-delete:active:hover,
+.btn-delete.active:hover,
+.open > .dropdown-toggle.btn-delete:hover,
+.btn-delete:active:focus,
+.btn-delete.active:focus,
+.open > .dropdown-toggle.btn-delete:focus,
+.btn-delete:active.focus,
+.btn-delete.active.focus,
+.open > .dropdown-toggle.btn-delete.focus {
+  color: #fff;
+  background-color: #f40000;
+  border-color: #f40000;
+}
+.btn-delete:active,
+.btn-delete.active,
+.open > .dropdown-toggle.btn-delete {
+  background-image: none;
+}
+.btn-delete.disabled:hover,
+.btn-delete[disabled]:hover,
+fieldset[disabled] .btn-delete:hover,
+.btn-delete.disabled:focus,
+.btn-delete[disabled]:focus,
+fieldset[disabled] .btn-delete:focus,
+.btn-delete.disabled.focus,
+.btn-delete[disabled].focus,
+fieldset[disabled] .btn-delete.focus {
+  background-color: #fb3737;
+  border-color: #fb3737;
+}
+.btn-delete .badge {
+  color: #fb3737;
+  background-color: #fff;
+}
+
+
+
+*{
+  font-family: "Microsoft Yahei"
+}
+
+.user-oprt{
+  font-size: 21px;
+  margin: 10px;
+  color: #333;
+}
+.user-oprt:hover{
+  color: #888;
+}
+.user-oprt-container{
+  padding: 20px;
+}
+
+
+.user-update,.user-update:hover{
+  border: none;
+  color: #000;
+  font-style: normal;
+  width: 100%;
+  outline: none;
+  height: 100%;
+  text-align: center;
+}
+
+
+.user-tr-unsave{
+  background:#BF9F7F;
+}
