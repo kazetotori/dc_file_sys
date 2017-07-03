@@ -51,13 +51,7 @@ require(['requireAsync'], function (requireAsync) {
         (window.onresize = function () { $(document.body).height($(window).height()) })();
 
         //将该组下用户添加至页面
-        getAllUsers().then(function (userList) {
-            userList.forEach(function (userInfo) {
-                userInfo.status = 'saved';
-                addUserTR(userInfo);
-            })
-        })
-
+        refreshUsers();
 
         //添加全选按钮的单击事件
         $('#checkAllUsers').click(function () {
@@ -67,8 +61,9 @@ require(['requireAsync'], function (requireAsync) {
             })
         })
 
-        //添加"新用户"按钮的单击事件
+        //对页面上的按键进行事件注册
         $('#addUser').click(newUser);
+        $('#deleteUser').click(deleteUsers);
     }
 
 
@@ -131,7 +126,7 @@ require(['requireAsync'], function (requireAsync) {
      */
     function addUserTR(userInfo) {
         var trHTML = ('<tr>'
-            + '<td>{lineNo}</td>'
+            + '<td class="user-line-no">{lineNo}</td>'
             + '<td><input class="user-checkbox" type="checkbox"></td>'
             + '<td><input class="user-input user-username" value="{username}"></td>'
             + '<td><input class="user-input" type="password" value="{password}"></td>'
@@ -183,6 +178,7 @@ require(['requireAsync'], function (requireAsync) {
     }
 
 
+
     /**
      * 获取所有用户数据
      * @return {Promise<Array<Object>>} 用户列表
@@ -202,5 +198,56 @@ require(['requireAsync'], function (requireAsync) {
                 }
             })
         });
+    }
+
+
+    /**
+     * 刷新页面上的用户列表
+     */
+    function refreshUsers() {
+        getAllUsers().then(function (userList) {
+            userList.forEach(function (userInfo) {
+                userInfo.status = 'saved';
+                addUserTR(userInfo);
+            })
+        })
+    }
+
+
+
+    /**
+     * 将页面上所有tr中未保存的数据进行保存，提示已保存数量，并提示失败原因
+     */
+    function saveUsers() {
+        var toSaveUsers = [];
+        
+    }
+
+
+
+    /**
+     * 删除所有选中的用户
+     * 1、删除所有未保存的新用户
+     * 2、删除所有存在于数据库中的用户
+     * 3、重置页面上的tr的行号，并重新计算trsCount
+     */
+    function deleteUsers() {
+        for (var i = 0; i < newUserTRs.length; i++) {
+            ; +function (tr) {
+                var checked = $(tr).find('.user-checkbox')[0].checked;
+                if (!checked)
+                    return false;
+                $(tr).remove();
+                newUserTRs.remove(tr);
+                i--;
+            }(newUserTRs[i])
+        }
+
+        //TODO 2、
+
+        trsCount = 0;
+        $('#tblUsers>tbody>tr').each(function (i, tr) {
+            $(tr).find('.user-line-no').html(++trsCount);
+        })
     }
 })
