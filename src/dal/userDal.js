@@ -7,8 +7,8 @@ module.exports.selectRow = selectRow;
 module.exports.selectRowByUserId = selectRowByUserId;
 module.exports.selectGroup = selectGroup;
 module.exports.selectGroupCount = selectGroupCount;
-module.exports.deleteByUserId = deleteByUserId;
-module.exports.updatePass = updatePass;
+module.exports.deleteUsers = deleteUsers;
+module.exports.updateUser = updateUser;
 
 
 
@@ -29,17 +29,26 @@ async function insertRow(model) {
 
 
 /**
- * 删除一条t_user表中的数据
- * @param {Number} userId
- * @return {Number} 影响行数
+ * 删除多条t_user中的数据
+ * @param {Array<number>} userIds  要删除的userId的数组
+ * @return {number} 指示是否成功删除
  */
-async function deleteByUserId(userId) {
+async function deleteUsers(userIds) {
+    if (userIds.length === 0)
+        return 0;
     let conn = await pool.getConn();
     let cmd = 'DELETE FROM t_user WHERE user_id=?';
-    let params = [userId];
-    let execRst = await conn.query(cmd, params);
-    await conn.release();
-    return execRst[0].affectRows;
+    let deleteIds = [];
+    await conn.begin();
+    for (let i = 0; i < userIds.length; i++) {
+        let userId = userIds[i];
+        let singleRst = await conn.query(cmd, [userId]);
+        if (singleRst[0].affectRows > 0) {
+            deleteIds.push(userId);
+        }
+    }
+    await conn.commit()
+    return 1;
 }
 
 

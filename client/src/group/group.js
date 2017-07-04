@@ -99,6 +99,20 @@ require(['requireAsync'], function (requireAsync) {
     }
 
 
+    /**
+     * 新增array.looseIndexOf函数，即indexOf的不严谨比较
+     * @param {any} ele 要查找的元素
+     * @return {number} 查找元素的索引
+     */
+    Array.prototype.looseIndexOf = function (ele) {
+        for (var i = 0; i < this.length; i++) {
+            if (ele == this[i])
+                return i;
+        }
+        return -1;
+    }
+
+
 
     /**
      * 清空所有用户
@@ -219,7 +233,6 @@ require(['requireAsync'], function (requireAsync) {
      * 将页面上所有tr中未保存的数据进行保存，提示已保存数量，并提示失败原因
      */
     function saveUsers() {
-        var toSaveUsers = [];
         
     }
 
@@ -243,8 +256,65 @@ require(['requireAsync'], function (requireAsync) {
             }(newUserTRs[i])
         }
 
-        //TODO 2、
+        function delFilter(tr) {
+            if (!($(tr).find('.user-checkbox')[0].checked))
+                return;
+            toDeleteTRs.push(tr);
+            toDeleteUsers.push(tr.userId);
+        }
 
+        var toDeleteUsers = [];
+        var toDeleteTRs = [];
+        savedUserTRs.forEach(delFilter);
+        updateUserTRs.forEach(delFilter);
+        $.ajax({
+            url: '/main/group/deleteUsers',
+            data: { toDeleteUsers: toDeleteUsers.join(',') },
+            dataType: 'json',
+            timeout: ajaxTimeout,
+            type: 'POST',
+            error: function (status, xhr) {
+                toastr.error('失败，详情请使用f12打开工具查看日志', '删除用户');
+                console.error('删除失败', xhr, status);
+            },
+            success: function (ret, status) {
+                if (ret.result !== 'deleteUsers_success') {
+                    console.error('删除失败', ret.errMsg);
+                    return toastr.error('失败，详情请使用f12打开工具查看日志', '删除用户');
+                }
+
+                for (var i = 0; i < savedUserTRs.length; i++) {
+                    var tr = savedUserTRs[i];
+                    if (ret.deletedUserList.looseIndexOf(tr.userId) === -1)
+                        continue;
+                    $(tr).remove();
+                    savedUserTRs.remove(tr);
+                    i--;
+                }
+                for (var i = 0; i < updateUserTRs.length; i++) {
+                    var tr = updateUserTRs[i];
+                    if (ret.deletedUserList.looseIndexOf(tr.userId) === -1)
+                        continue;
+                    $(tr).remove();
+                    savedUserTRs.remove(tr);
+                    i--;
+                }
+
+                toastr.success('此次删除的用户的id号依次为:' + ret.deletedUserList.join(','), '删除用户');
+                reCount();
+            }
+        })
+
+        //重置计数
+        reCount();
+    }
+
+
+
+    /**
+     * 重置计数
+     */
+    function reCount() {
         trsCount = 0;
         $('#tblUsers>tbody>tr').each(function (i, tr) {
             $(tr).find('.user-line-no').html(++trsCount);

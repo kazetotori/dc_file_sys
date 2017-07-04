@@ -75,6 +75,14 @@ fieldset[disabled] .btn-delete.focus {
   font-family: "Microsoft Yahei"
 }
 
+
+#tblUsers{
+  margin-top: 20px;
+}
+
+nav{
+  height: auto;
+}
 .user-oprt{
   font-size: 21px;
   margin: 10px;
@@ -84,7 +92,18 @@ fieldset[disabled] .btn-delete.focus {
   color: #888;
 }
 .user-oprt-container{
-  padding: 20px;
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 47;
+  line-height: 47px;
+  font-size: 18px;
+  padding-right: 15px;
+}
+@media (max-width:768px){
+  .user-oprt-container{
+    position: static;
+  }
 }
 
 

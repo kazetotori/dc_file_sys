@@ -12,7 +12,6 @@
     <div class="container">
         <!--头部-->
         <header>
-            <div class="hidden-xs middle-logo"></div>
             <nav>
                 <ul class="nav nav-decoration">
                     <% modules.forEach(function(module){ %>
@@ -23,8 +22,10 @@
                         </li>
                         <% }) %>
                 </ul>
-                <div class="nav-logo hidden-xs">
-                    <span>德辰云文件</span>
+                <div class="user-oprt-container">
+                    <a href="#" class="user-oprt" id="addUser"><i class="glyphicon glyphicon-plus"></i></a>
+                    <a href="#" class="user-oprt" id="deleteUser"><i class="glyphicon glyphicon-remove"></i></a>
+                    <a href="#" class="user-oprt" id="saveUser"> <i class="glyphicon glyphicon-ok"></i> </a>
                 </div>
             </nav>
         </header>
@@ -33,11 +34,6 @@
 
         <!--主要部分-->
         <main>
-            <div class="text-center user-oprt-container">
-                <a href="#" class="user-oprt" id="addUser"><i class="glyphicon glyphicon-plus"></i></a>
-                <a href="#" class="user-oprt" id="deleteUser"><i class="glyphicon glyphicon-remove"></i></a>
-                <a href="#" class="user-oprt" id="saveUser"> <i class="glyphicon glyphicon-ok"></i> </a>
-            </div>
             <div class="table-responsive">
                 <table class="table table-bordered text-center" id="tblUsers">
                     <thead>

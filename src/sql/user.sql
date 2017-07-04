@@ -30,7 +30,7 @@ CREATE TABLE `t_sign`(
     `sign_id` INT AUTO_INCREMENT,
     `sign_token` CHAR(40) NOT NULL,
     `user_no` INT NOT NULL,
-    `sign_ip` CHAR(16) NOT NULL,
+    `sign_ip` CHAR(30) NOT NULL,
     `sign_ts` BIGINT NOT NULL,
     PRIMARY KEY(`sign_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

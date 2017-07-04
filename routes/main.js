@@ -16,6 +16,7 @@ module.exports = router;
 router.use(tokenConfirm)
 router.use('/index', Index);
 router.use('/group/getAllUsers', getAllUsers);
+router.use('/group/deleteUsers', deleteUsers);
 router.use('/group', adminConfirm, Group);
 router.use('/getDir', setReqRootDir, getDir);
 router.use('/downFiles', setReqRootDir, downFiles);
@@ -113,10 +114,6 @@ async function getAllUsers(req, res) {
             result: 'getAllUsers_success',
             userList: userList
         }))
-        console.log(JSON.stringify({
-            result: 'getAllUsers_success',
-            userList: userList
-        }));
         logDal.insertRow(logModel);
     }
     catch (e) {
@@ -126,6 +123,31 @@ async function getAllUsers(req, res) {
         logDal.insertRow(logModel);
     }
 
+}
+
+/**
+ * 删除指定用户
+ */
+async function deleteUsers(req, res) {
+    let logModel = { logTitle: '删除用户', logMsg: 'deleteUsers_success', pcsName: '/main/group/deleteUsers', errStatus: 0 };
+    let toDeleteUsers = req.body.toDeleteUsers.split(',');
+    try {
+        let deleted = await userDal.deleteUsers(toDeleteUsers);
+        res.end(JSON.stringify({
+            result: 'deleteUsers_success',
+            deletedUserList: toDeleteUsers
+        }));
+        logDal.insertRow(logModel);
+    }
+    catch (e) {
+        res.end(JSON.stringify({
+            result: 'deleteUsers_failed',
+            errMsg: e.message
+        }))
+        logDal.logMsg = 'deleteUsers_failed:' + e.message;
+        logDal.errStatus = -1;
+        logDal.insertRow(logDal);
+    }
 }
 
 /**
