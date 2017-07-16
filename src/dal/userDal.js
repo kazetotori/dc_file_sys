@@ -14,13 +14,13 @@ module.exports.updateUser = updateUser;
 
 /**
  * 向表t_user中添加一条数据
- * @param {Object} model 插入user的模型，参数必选:username,password,groupName
+ * @param {Object} model 插入user的模型，参数必选:username,password,groupNo
  * @return {Number} 插入后得到的insertId
  */
 async function insertRow(model) {
     let conn = await pool.getConn();
-    let cmd = 'INSERT INTO t_user(username,password,group_no,is_admin) VALUES(?,?,?,?)';
-    let params = [model.username, model.password, model.groupNo, !!model.isAdmin ? 1 : 0];
+    let cmd = 'INSERT INTO t_user(username,password,group_no,per_lv) VALUES(?,?,?,?)';
+    let params = [model.username, model.password, model.groupNo, isNaN(model.perLV) ? 0 : model.perLV];
     let execRst = await conn.query(cmd, params);
     await conn.commit();
     await conn.release();
@@ -65,7 +65,7 @@ async function selectRow(username, groupNo) {
         username,
         password,
         group_no AS groupNo,
-        is_admin AS isAdmin
+        per_lv AS perLV
         FROM t_user WHERE username=? AND group_no=?`;
     let params = [username, groupNo];
     let ret = (await conn.query(cmd, params))[0][0];
@@ -87,7 +87,7 @@ async function selectRowByUserId(userId) {
         username,
         password,
         group_no AS groupNo,
-        is_admin AS isAdmin 
+        per_lv AS perLV 
         FROM t_user WHERE user_id=?`;
     let params = [userId];
     let ret = (await conn.query(cmd, params))[0][0]
@@ -108,7 +108,7 @@ async function selectGroup(groupNo) {
         username,
         password,
         group_no AS groupNo,
-        is_admin AS isAdmin 
+        per_lv AS perLV 
         FROM t_user WHERE group_no=?`;
     let params = [groupNo];
     let ret = (await conn.query(cmd, params))[0];
@@ -138,7 +138,7 @@ async function selectGroupCount(groupNo) {
  */
 async function updateUser(model) {
     let conn = await pool.getConn();
-    let cmd = 'UPDATE TABLE t_user SET {fields} WHERE user_id=?';
+    let cmd = 'UPDATE t_user SET {fields} WHERE user_id=?';
     let fields = [];
     let params = [];
     if (model.password) {
@@ -157,7 +157,6 @@ async function updateUser(model) {
         cmd = cmd.replace('{fields}', fields.join(' , '));
         params.push(model.userId);
     }
-
     let ret = (await conn.query(cmd, params))[0].affectRows;
     await conn.release();
     return ret;

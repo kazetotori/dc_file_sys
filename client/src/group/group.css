@@ -87,6 +87,7 @@ nav{
   font-size: 21px;
   margin: 10px;
   color: #333;
+  cursor: pointer;
 }
 .user-oprt:hover{
   color: #888;

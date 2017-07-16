@@ -22,6 +22,9 @@ require(['requireAsync'], function (requireAsync) {
     var newUserTRs = [];
     var trsCount = 0;
     var statusEnum = { saved: '已保存', update: '已修改', newUser: '新用户' };
+    var unameReg = /[\d]{4,6}/;
+    var passReg = /[a-zA-Z0-9]{4,12}/;
+    var adminTR;
 
 
     //引入页面上所需的js文件
@@ -48,11 +51,26 @@ require(['requireAsync'], function (requireAsync) {
         //添加fastclick
         FastClick.attach(document.body);
 
+        //改写toastr的四个函数，使其在吐司通知的同时能打印到控制台中
+        for (var k in toastr) {
+            ; +function (key) {
+                var toastrFn = toastr[key];
+                toastr[key] = function (text, title) {
+                    switch (key) {
+                        case 'success': case 'info': console.log(title, text); break;
+                        case 'warning': console.warn(title, text); break;
+                        case 'error': console.error(title, text); break;
+                    }
+                    toastrFn.apply(toastr, Array.prototype.slice.call(arguments, 0));
+                }
+            }(k);
+        }
+
         //添加onresize事件，使body的高度虽浏览器高度变化，并执行一次
         (window.onresize = function () { $(document.body).height($(window).height()) })();
 
         //将该组下用户添加至页面
-        refreshUsers();
+        refreshUserTRs();
 
         //添加全选按钮的单击事件
         $('#checkAllUsers').click(function () {
@@ -60,12 +78,14 @@ require(['requireAsync'], function (requireAsync) {
             $('.user-checkbox').each(function (i, v) {
                 this.checked = that.checked;
             })
-        })
+            $(adminTR).find('.user-checkbox')[0].checked = false;
+        });
 
         //对页面上的按键进行事件注册
         $('#addUser').click(newUser);
         $('#deleteUser').click(deleteUsers);
         $('#saveUser').click(saveUsers);
+        $('#refreshUser').click(refreshUserTRs);
     }
 
 
@@ -75,83 +95,81 @@ require(['requireAsync'], function (requireAsync) {
     //=====================================================functions====================================================
 
     /**
-     * 新增array的remove函数，即从数组中删除对应元素
-     * @param {any} ele 要删除的元素
-     * @param {string} flag 标识: i、删除第一个匹配的元素 g、删除所有匹配的元素
-     * @return {number} 删除的元素数量
+     * 从数组或字符串中删除对应元素
+     * @param {Array|string} arr 数组或字符串
+     * @param {any|string} ele 需要删除的元素
+     * @param {string} flag i、删除第一个匹配的元素 g、删除所有匹配的元素
+     * @return {number} 删除的数量
      */
-    Object.defineProperty(Array.prototype, 'remove', {
-        value: function (ele, flag) {
-            flag = 'ig'.indexOf(flag) === -1 ? 'i' : 'g';
-            var idx = this.indexOf(ele);
+    function remove(arr, ele, flag) {
+        var idx = arr.indexOf(ele);
+        flag = 'ig'.indexOf(flag) === -1 ? 'i' : 'g';
 
-            if (idx === -1) return 0;
-            if (flag === 'i') {
-                this.splice(idx, 1);
-                return 1;
-            }
+        if (idx === -1)
+            return 0;
+        if (flag === 'i') {
+            arr.splice(idx, 1);
+            return 1;
+        }
 
-            var count = 0;
-            while (idx !== -1) {
-                this.splice(idx, 1);
-                count++;
-                idx = this.indexOf(ele);
-            }
+        var count = 0;
+        while (idx !== -1) {
+            arr.splice(idx, 1);
+            count++;
+            idx = arr.indexOf(ele);
+        }
 
-            return count;
-        },
-        enumerable: false
-    })
+        return count;
+    }
+
 
 
     /**
-     * 新增array.looseIndexOf函数，即indexOf的不严谨比较
-     * @param {any} ele 要查找的元素
-     * @return {number} 查找元素的索引
+     * 宽松的indexOf函数
+     * @param {Array|string} arr 数组或字符串
+     * @param {any|string} ele 需要匹配的元素
+     * @return {number} 索引，如果没有找到则返回-1
      */
-    Object.defineProperty(Array.prototype, 'looseIndexOf', {
-        value: function (ele) {
-            for (var i = 0; i < this.length; i++) {
-                if (ele == this[i])
-                    return i;
-            }
-            return -1;
-        },
-        enumerable: false
-    })
+    function looseIndexOf(arr, ele) {
+        for (var i = 0; i < arr.length; i++) {
+            if (ele == arr[i])
+                return i;
+        }
+        return -1;
+    }
+
 
 
     /**
-     * 新增object.formatString函数，即将对象通过固定格式表现
-     * @param {Object} fmt 格式，键名->表现名
-     * @param {Array} hiddenKeyArr 不显示的键的列表
-     * @param {String} separator 将各个键值组合起来的连接符，默认为","
-     * @return {String} 用于表现该对象的字符串
+     * 将一个对象格式化为string，并将对应键名修改成对应的表示的键名
+     * @param {Object} obj 需要格式化的对象
+     * @param {Object} format 键名的表示格式
+     * @param {Array} hiddenKeys 需要隐藏的键
+     * @param {string} separator 各个键值的分隔符
      */
-    Object.defineProperty(Object.prototype, 'formatString', {
-        value: function (fmt, hiddenKeyArr, separator) {
-            var retArr = [];
-            separator = separator || ',';
-            for (var k in this) {
-                if (hiddenKeyArr.indexOf(k) !== -1)
-                    continue;
-                var keyName = fmt[k];
-                var val = this[k];
-                retArr.push(keyName + ':' + val);
-            }
-            return retArr.join(separator);
-        },
-        enumerable: false
-    })
+    function formatObj(obj, format, hiddenKeys, separator) {
+        var retArr = [];
+        hiddenKeys = hiddenKeys || [];
+        separator = separator || ',';
+        for (var k in obj) {
+            if (hiddenKeys.indexOf(k) !== -1)
+                continue;
+            var keyName = format[k] || k;
+            var value = obj[k];
+            retArr.push(keyName + ':' + value);
+        }
+        return retArr.join(separator);
+    }
+
 
 
     /**
-     * 清空所有用户
+     * 清空所有user的tr控件     
      * 1、清空后台缓存数据
      * 2、重置计数器
      * 3、清空页面上的数据
      */
-    function clearUserTR() {
+    function clearUserTRs() {
         savedUserTRs = [];
         updateUserTRs = [];
         newUserTRs = [];
@@ -162,73 +180,56 @@ require(['requireAsync'], function (requireAsync) {
 
 
     /**
-     * 根据提供的userInfo向表格中添加一行数据
-     * 1、创建tr对象
-     * 2、将userId写入tr对象
-     * 3、根据userInfo.status进行页面调整
-     * 4、将tr对象添加至页面
-     * @param {Object} userInfo 
+     * 向页面添加一个user的tr控件
+     * @param {Object} userInfo 用户信息
+     * @return {HTMLTableRowElement} 返回该用户对应的行的控件
      */
     function addUserTR(userInfo) {
         var trHTML = ('<tr>'
-            + '<td class="user-line-no">{lineNo}</td>'
+            + '<td class="user-line-no">' + (++trsCount) + '</td>'
             + '<td><input class="user-checkbox" type="checkbox"></td>'
-            + '<td><input class="user-input user-username" value="{username}"></td>'
-            + '<td><input class="user-input user-password" type="password" value="{password}"></td>'
-            + '<td><input class="user-input user-perLV" value="{perLV}"></td>'
-            + '<td class="user-status">{status}</td>'
-            + '</tr>')
-            .replace(/{lineNo}/g, ++trsCount)
-            .replace(/{username}/g, userInfo.username)
-            .replace(/{password}/g, userInfo.password)
-            .replace(/{status}/g, statusEnum[userInfo.status])
-            .replace(/{perLV}/g, userInfo.perLV);
+            + '<td><input class="user-input user-username" value="' + userInfo.username + '"></td>'
+            + '<td><input class="user-input user-password" type="password" value="' + userInfo.password + '"></td>'
+            + '<td><input class="user-input user-perLV" value="' + userInfo.perLV + '"></td>'
+            + '<td class="user-status">' + statusEnum[userInfo.status] + '</td>'
+            + '</tr>');
         var $tr = $(trHTML);
         var tr = $tr[0];
-        tr.status = userInfo.status;
         tr.userId = userInfo.userId || '';
 
         switch (userInfo.status) {
             case 'saved':
-                savedUserTRs.push(tr); break;
+                savedUserTRs.push(tr)
+                $tr.find('.user-username').attr('readonly', true);
+                break;
             case 'update':
-                updateUserTRs.push(tr); break;
+                updateUserTRs.push(tr);
+                $tr.addClass('user-unsave');
+                break;
             default:
                 newUserTRs.push(tr);
-        }
-        $tr.find('.user-username').attr('readonly', userInfo.status !== 'newUser');
-
-        if (userInfo.status !== 'saved') {
-            $tr.addClass('user-unsave');
-            $tr.find('.user-status')
-        }
-        else {
-            $tr.find('.user-input').change(function () {
-                //如果改变的是密码，则将密码赋给当前组件，否则将perLV赋值给当前组件
-                if ($(this).hasClass('user-password')) {
-                    this.password = this.value;
-                }
-                else {
-                    this.perLV = this.value;
-                }
-                savedUserTRs.remove(this);
-                updateUserTRs.push(this);
                 $tr.addClass('user-unsave');
-                tr.status = 'update';
-                $tr.find('.user-status').html(statusEnum[tr.status]);
-            })
+                break;
         }
+
+        if (userInfo.perLV === 9999) {
+            $tr.find('.user-perLV').attr('readonly', true);
+            $tr.find('.user-checkbox').attr('disabled', true)[0];
+            adminTR = tr;
+        }
+
+        $tr.find('.user-input').change(function () {
+            //如果是已经保存的状态
+            if (savedUserTRs.indexOf(tr) !== -1) {
+                $tr.addClass('user-unsave');
+                remove(savedUserTRs, tr);
+                updateUserTRs.push(tr);
+                $tr.find('.user-status').html(statusEnum['update']);
+            }
+        })
+
         $('#tblUsers>tbody').append($tr);
-    }
-
-
-
-    /**
-     * 新建一行用户数据
-     */
-    function newUser() {
-        var userInfo = { username: '', password: '', status: 'newUser', perLV: 0 };
-        addUserTR(userInfo);
+        return tr;
     }
 
 
@@ -256,9 +257,10 @@ require(['requireAsync'], function (requireAsync) {
 
 
     /**
-     * 刷新页面上的用户列表
+     * 重新从服务器上获取用户列表，并刷新当前用户界面
      */
-    function refreshUsers() {
+    function refreshUserTRs() {
+        clearUserTRs();
         getAllUsers().then(function (userList) {
             userList.forEach(function (userInfo) {
                 userInfo.status = 'saved';
@@ -270,128 +272,52 @@ require(['requireAsync'], function (requireAsync) {
 
 
     /**
-     * 将页面上所有tr中未保存的数据进行保存，提示已保存数量，并提示失败原因
-     * 1、遍历所有新用户tr组件，将数据添加至toInsertUsers
+     * 新建一行用户数据
      */
-    function saveUsers() {
-        var toInsertUsers = [];
-        var toUpdateUsers = [];
-        var unameReg = /[\d]{4,6}/;
-        var passReg = /[a-zA-Z0-9]{4,12}/
-        var i;
-
-        for (i = 0; i < newUserTRs.length; i++) {
-            var newUserTR = newUserTRs[i];
-            var uname = $(newUserTR).find('.user-username').val();
-            var pass = $(newUserTR).find('.user-password').val();
-            var perLV = $(newUserTR).find('.user-perLV').val();
-            var lineNo = $(newUserTR).find('.user-line-no').html();
-            if (!unameReg.test(uname)) {
-                return toastr.error('行号为 ' + lineNo + ' 的用户名格式错误，请使用4-6位的数字作为用户名', '保存失败');
-            }
-            if (!passReg.test(pass)) {
-                return toastr.error('行号为 ' + lineNo + ' 的密码格式错误，请使用4-12位的数字和字母的组合作为密码', '保存失败');
-            }
-            if (isNaN(perLV)) {
-                return toastr.error('行号为' + lineNo + '权限等级不是数字', '保存失败');
-            }
-            toInsertUsers.push({
-                username: uname,
-                password: pass,
-                perLV: perLV,
-                lineNo: lineNo
-            })
-        }
-
-        for (i = 0; i < updateUserTRs.length; i++) {
-            var upUserTR = updateUserTRs[i];
-            var uname = $(upUserTR).find('.user-username').val();
-            var pass = $(upUserTR).find('.user-password').val();
-            var perLV = $(upUserTR).find('.user-perLV').val();
-            var lineNo = $(upUserTR).find('.user-line-no').html();
-            if (!unameReg.test(uname)) {
-                //TODO: 关闭遮罩层
-                return toastr.error('行号为 ' + lineNo + ' 的用户名格式错误，请使用4-6位的数字作为用户名', '保存失败');
-            }
-            if (!passReg.test(pass)) {
-                //TODO: 关闭遮罩层
-                return toastr.error('行号为 ' + lineNo + ' 的密码格式错误，请使用4-12位的数字和字母的组合作为密码', '保存失败');
-            }
-            if (isNaN(perLV)) {
-                return toastr.error('行号为 ' + lineNo + ' 的权限等级不是数字', '保存失败');
-            }
-            toUpdateUsers.push({
-                username: uname,
-                password: pass,
-                perLV: perLV,
-                lineNo: lineNo
-            })
-        }
-        console.log(toUpdateUsers);
-        return $.ajax({
-            url: '/main/group/saveUsers',
-            type: 'POST',
-            dataType: 'json',
-            timeout: ajaxTimeout,
-            data: { toInsert: toInsertUsers, toUpdate: toUpdateUsers },
-            error: function (status, xhr) {
-                toastr.error('失败，详情请使用f12打开工具查看错误提示', '保存用户');
-                console.error('保存用户失败', xhr, status);
-            },
-            success: function (ret, status) {
-                var successStr = '';
-                var errorStr = '';
-                for (var i = 0; i < ret.savedUsers.length; i++) {
-                    var user = ret.savedUsers[i];
-                    var $tr = $('#tblUsers>tbody>tr').eq(user.lineNo - 1);
-                    successStr += user.formatString({ lineNo: '行号', username: '用户名' }) + '\r\n';
-                    $tr.removeClass('user-unsave');
-                    $tr.find('.user-status').html('已保存');
-                }
-                for (var i = 0; i < ret.failedUsers.length; i++) {
-                    errorStr += ret.failedUsers[i].formatString({ lineNo: '行号', username: '用户名', errMsg: '错误信息' }) + '\r\n';
-                }
-                toastr.success('此次保存成功的数据一共' + ret.savedUsers.length + '条。分别为\r\n' + successStr, '保存成功');
-                toastr.error('此次保存失败的数据一共' + ret.failedUsers.length + '条，请按下f12进入工具查看', '保存失败');
-                console.error('保存失败', errorStr);
-            }
-        })
+    function newUser() {
+        var userInfo = { username: '', password: '', status: 'newUser', perLV: 0 };
+        addUserTR(userInfo);
     }
 
 
 
     /**
-     * 删除所有选中的用户
-     * 1、删除所有未保存的新用户
-     * 2、删除所有存在于数据库中的用户
-     * 3、重置页面上的tr的行号，并重新计算trsCount
+     * 删除选中用户
      */
     function deleteUsers() {
-        for (var i = 0; i < newUserTRs.length; i++) {
-            ; +function (tr) {
-                var checked = $(tr).find('.user-checkbox')[0].checked;
-                if (!checked)
-                    return false;
-                $(tr).remove();
-                newUserTRs.remove(tr);
-                i--;
-            }(newUserTRs[i])
+        var $userTRs = $('#tblUsers>tbody>tr');
+        var toDeleteUserArr = [];
+        var toDeleteTrArr = [];
+        var unsavedUser = 0;
+
+        for (var i = 0; i < $userTRs.length; i++) {
+            var tr = $userTRs[i];
+            var $tr = $(tr);
+            if (!$tr.find('.user-checkbox')[0].checked)
+                continue;
+            //如果是新建还未保存
+            if (newUserTRs.indexOf(tr) !== -1) {
+                $tr.remove();
+                remove(newUserTRs, tr);
+                unsavedUser++;
+                //i--; //这里不需要i--
+                continue;
+            }
+
+            toDeleteTrArr.push(tr);
+            toDeleteUserArr.push(tr.userId);
+        }
+        if (!(unsavedUser || toDeleteUserArr.length)) {
+            return toastr.info('本次没有选中任何需要删除的数据', '删除用户');
         }
 
-        function delFilter(tr) {
-            if (!($(tr).find('.user-checkbox')[0].checked))
-                return;
-            toDeleteTRs.push(tr);
-            toDeleteUsers.push(tr.userId);
-        }
+        toastr.success('本次共删除' + unsavedUser + '条未保存的数据', '删除用户');
+        console.log(toDeleteTrArr);
+        if (toDeleteTrArr.length === 0) return;
 
-        var toDeleteUsers = [];
-        var toDeleteTRs = [];
-        savedUserTRs.forEach(delFilter);
-        updateUserTRs.forEach(delFilter);
         $.ajax({
             url: '/main/group/deleteUsers',
-            data: { toDeleteUsers: toDeleteUsers.join(',') },
+            data: { toDeleteUsers: toDeleteUserArr.join(',') },
             dataType: 'json',
             timeout: ajaxTimeout,
             type: 'POST',
@@ -405,30 +331,19 @@ require(['requireAsync'], function (requireAsync) {
                     return toastr.error('失败，详情请使用f12打开工具查看日志', '删除用户');
                 }
 
-                for (var i = 0; i < savedUserTRs.length; i++) {
-                    var tr = savedUserTRs[i];
-                    if (ret.deletedUserList.looseIndexOf(tr.userId) === -1)
+                for (var i = 0; i < toDeleteTrArr.length; i++) {
+                    var tr = toDeleteTrArr[i];
+                    if (looseIndexOf(ret.deletedUserList, tr.userId) === -1)
                         continue;
                     $(tr).remove();
-                    savedUserTRs.remove(tr);
-                    i--;
-                }
-                for (var i = 0; i < updateUserTRs.length; i++) {
-                    var tr = updateUserTRs[i];
-                    if (ret.deletedUserList.looseIndexOf(tr.userId) === -1)
-                        continue;
-                    $(tr).remove();
-                    savedUserTRs.remove(tr);
-                    i--;
+                    remove(savedUserTRs, tr);
+                    remove(updateUserTRs, tr);
                 }
 
-                toastr.success('此次删除的用户的id号依次为:' + ret.deletedUserList.join(','), '删除用户');
+                toastr.success('此次删除的已保存用户的id号依次为:' + ret.deletedUserList.join(','), '删除用户');
                 reCount();
             }
         })
-
-        //重置计数
-        reCount();
     }
 
 
@@ -440,6 +355,75 @@ require(['requireAsync'], function (requireAsync) {
         trsCount = 0;
         $('#tblUsers>tbody>tr').each(function (i, tr) {
             $(tr).find('.user-line-no').html(++trsCount);
+        })
+    }
+
+
+
+    /**
+     * 保存用户
+     */
+    function saveUsers() {
+        var toInsert = [];
+        var toUpdate = [];
+        var $unsaveTRs = $('.user-unsave');
+
+        if (!$unsaveTRs.length) return toastr.info('没有任何需要保存的数据', '保存用户');
+
+        //遍历所有未保存的
+        for (var i = 0; i < $unsaveTRs.length; i++) {
+            var tr = $unsaveTRs[i];
+            var uname = $(tr).find('.user-username').val();
+            var pass = $(tr).find('.user-password').val();
+            var perLV = $(tr).find('.user-perLV').val();
+            var lineNo = $(tr).find('.user-line-no').html();
+            if (!unameReg.test(uname)) return toastr.error('第' + lineNo + '行中用户名格式不正确，请使用4-6位的数字作为用户名', '保存用户');
+            if (!passReg.test(pass)) return toastr.error('第' + lineNo + '行中密码格式不正确，请使用4-12位的数字与字母组合作为密码', '保存用户');
+            if (isNaN(perLV)) return toastr.error('第' + lineNo + '行中权限等级不是数字', '保存用户');
+
+            var userInfo = {
+                username: uname,
+                password: pass,
+                perLV: perLV,
+                userId: tr.userId,
+                lineNo: lineNo
+            };
+            (userInfo.userId === '' ? toInsert : toUpdate)['push'](userInfo);
+        }
+
+        $.ajax({
+            url: '/main/group/saveUsers',
+            type: 'POST',
+            dataType: 'json',
+            timeout: ajaxTimeout,
+            data: { toInsert: toInsert, toUpdate: toUpdate },
+            error: function (xhr, status) {
+                if (status == 'timeout') return toastr.error('响应超时，请检查网络环境', '保存用户');
+                if (status == 'parsererror') return toastr.error('数据格式错误，请将此消息上报bug', '保存用户');
+                toastr.error('错误信息：' + status, '保存用户');
+                console.error(xhr);
+            },
+            success: function (ret, status) {
+                console.log(ret.savedUsers);
+                for (var i = 0; i < ret.savedUsers.length; i++) {
+                    var userInfo = ret.savedUsers[i];
+                    var tr = $('#tblUsers>tbody>tr')[Number(userInfo.lineNo) - 1];
+                    var $tr = $(tr);
+                    tr.userId = userInfo.userId;
+                    $tr.removeClass('user-unsave');
+                    $tr.find('.user-password').val('hello world');
+                    $tr.find('.user-status').html(statusEnum['saved']);
+                    savedUserTRs.push(tr);
+                    remove(newUserTRs, tr);
+                    remove(updateUserTRs, tr);
+                }
+                toastr.success('本次一共保存了' + ret.savedUsers.length + '条数据', '保存用户')
+
+                if (ret.failedSaved.length) {
+                    toastr.error('本次有' + ret.failedSaved.length + '条数据保存失败，详情见f12控制台', '保存用户');
+                    console.error(ret.failedSaved);
+                }
+            }
         })
     }
 })

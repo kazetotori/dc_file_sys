@@ -50,7 +50,7 @@ async function tokenConfirm(req, res, next) {
     }
 
     let userInfo = await userDal.selectRowByUserId(signInfo.userNo);
-    userInfo.isAdmin = Boolean(userInfo.isAdmin[0]);
+    userInfo.isAdmin = userInfo.perLV === 9999;
 
     //如果用户在操作时被删除
     if (!userInfo) {
@@ -155,7 +155,63 @@ async function deleteUsers(req, res) {
  * 保存用户
  */
 async function saveUsers(req, res) {
-    console.log(req.body);
+    let successSaved = [];
+    let failedSaved = [];
+    let unameReg = /[\d]{4,6}/;
+    let passReg = /[a-zA-Z0-9]{4,12}/;
+
+    if (Array.isArray(req.body.toInsert)) {
+        for (let i = 0; i < req.body.toInsert.length; i++) {
+            let model = Object.assign({}, req.body.toInsert[i]);
+            let userId;
+            let logModel = { logTitle: '新增用户', logMsg: 'insertUser_success', pcsName: '/main/group/saveUsers', errStatus: 0 };
+
+            model.password = utils.sha1(model.password);
+            model.groupNo = req.userInfo.groupNo;
+            try {
+                if (!unameReg.test(model.username)) throw new Error('错误的用户名格式，不符合4-6位的数字');
+                if (!passReg.test(model.password)) throw new Error('错误的密码格式，不符合4-12位的字母和数字的组合');
+                if (isNaN(model.perLV)) throw new Error('权限等级不为数字');
+                userId = await userDal.insertRow(model);
+                successSaved.push({ userId: userId, lineNo: model.lineNo });
+            }
+            catch (e) {
+                logModel.logMsg = 'insertUser_failed';
+                logModel.errStatus = '-1';
+                failedSaved.push({ lineNo: model.lineNo, errMsg: e.message });
+            }
+            await logDal.insertRow(logModel);
+        }
+    }
+
+    if (Array.isArray(req.body.toUpdate)) {
+        for (let i = 0; i < req.body.toUpdate.length; i++) {
+            let model = Object.assign({}, req.body.toUpdate[i]);
+            let userId;
+            let logModel = { logTitle: '修改用户', logMsg: 'updateUser_success', pcsName: '/main/group/saveUsers', errStatus: 0 };
+
+            model.password = utils.sha1(model.password);
+            model.groupNo = req.userInfo.groupNo;
+
+            try {
+                if (!passReg.test(model.password)) throw new Error('错误的密码格式，不符合4-12位的字母和数字的组合');
+                if (isNaN(model.perLV)) throw new Error('权限等级不为数字');
+                userId = await userDal.updateUser(model);
+                successSaved.push({ userId: userId, lineNo: model.lineNo });
+            }
+            catch (e) {
+                logModel.logMsg = 'insertUser_failed';
+                logModel.errStatus = '-1';
+                failedSaved.push({ lineNo: model.lineNo, errMsg: e.message });
+            }
+            await logDal.insertRow(logModel);
+        }
+    }
+
+    res.end(JSON.stringify({
+        savedUsers: successSaved,
+        failedSaved: failedSaved
+    }))
 }
 
 /**
