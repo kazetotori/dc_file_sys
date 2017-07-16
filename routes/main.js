@@ -17,6 +17,7 @@ router.use(tokenConfirm)
 router.use('/index', Index);
 router.use('/group/getAllUsers', getAllUsers);
 router.use('/group/deleteUsers', deleteUsers);
+router.use('/group/saveUsers', saveUsers);
 router.use('/group', adminConfirm, Group);
 router.use('/getDir', setReqRootDir, getDir);
 router.use('/downFiles', setReqRootDir, downFiles);
@@ -148,6 +149,13 @@ async function deleteUsers(req, res) {
         logDal.errStatus = -1;
         logDal.insertRow(logDal);
     }
+}
+
+/**
+ * 保存用户
+ */
+async function saveUsers(req, res) {
+    console.log(req.body);
 }
 
 /**

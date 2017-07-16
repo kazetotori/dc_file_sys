@@ -23,6 +23,7 @@ require(['requireAsync'], function (requireAsync) {
     var trsCount = 0;
     var statusEnum = { saved: '已保存', update: '已修改', newUser: '新用户' };
 
+
     //引入页面上所需的js文件
     requireAsync('jquery', 'fastclick').then(function (modules) {
         $ = modules[0];
@@ -64,6 +65,7 @@ require(['requireAsync'], function (requireAsync) {
         //对页面上的按键进行事件注册
         $('#addUser').click(newUser);
         $('#deleteUser').click(deleteUsers);
+        $('#saveUser').click(saveUsers);
     }
 
 
@@ -78,25 +80,28 @@ require(['requireAsync'], function (requireAsync) {
      * @param {string} flag 标识: i、删除第一个匹配的元素 g、删除所有匹配的元素
      * @return {number} 删除的元素数量
      */
-    Array.prototype.remove = function (ele, flag) {
-        flag = 'ig'.indexOf(flag) === -1 ? 'i' : 'g';
-        var idx = this.indexOf(ele);
+    Object.defineProperty(Array.prototype, 'remove', {
+        value: function (ele, flag) {
+            flag = 'ig'.indexOf(flag) === -1 ? 'i' : 'g';
+            var idx = this.indexOf(ele);
 
-        if (idx === -1) return 0;
-        if (flag === 'i') {
-            this.splice(idx, 1);
-            return 1;
-        }
+            if (idx === -1) return 0;
+            if (flag === 'i') {
+                this.splice(idx, 1);
+                return 1;
+            }
 
-        var count = 0;
-        while (idx !== -1) {
-            this.splice(idx, 1);
-            count++;
-            idx = this.indexOf(ele);
-        }
+            var count = 0;
+            while (idx !== -1) {
+                this.splice(idx, 1);
+                count++;
+                idx = this.indexOf(ele);
+            }
 
-        return count;
-    }
+            return count;
+        },
+        enumerable: false
+    })
 
 
     /**
@@ -104,14 +109,40 @@ require(['requireAsync'], function (requireAsync) {
      * @param {any} ele 要查找的元素
      * @return {number} 查找元素的索引
      */
-    Array.prototype.looseIndexOf = function (ele) {
-        for (var i = 0; i < this.length; i++) {
-            if (ele == this[i])
-                return i;
-        }
-        return -1;
-    }
+    Object.defineProperty(Array.prototype, 'looseIndexOf', {
+        value: function (ele) {
+            for (var i = 0; i < this.length; i++) {
+                if (ele == this[i])
+                    return i;
+            }
+            return -1;
+        },
+        enumerable: false
+    })
 
+
+    /**
+     * 新增object.formatString函数，即将对象通过固定格式表现
+     * @param {Object} fmt 格式，键名->表现名
+     * @param {Array} hiddenKeyArr 不显示的键的列表
+     * @param {String} separator 将各个键值组合起来的连接符，默认为","
+     * @return {String} 用于表现该对象的字符串
+     */
+    Object.defineProperty(Object.prototype, 'formatString', {
+        value: function (fmt, hiddenKeyArr, separator) {
+            var retArr = [];
+            separator = separator || ',';
+            for (var k in this) {
+                if (hiddenKeyArr.indexOf(k) !== -1)
+                    continue;
+                var keyName = fmt[k];
+                var val = this[k];
+                retArr.push(keyName + ':' + val);
+            }
+            return retArr.join(separator);
+        },
+        enumerable: false
+    })
 
 
     /**
@@ -143,8 +174,8 @@ require(['requireAsync'], function (requireAsync) {
             + '<td class="user-line-no">{lineNo}</td>'
             + '<td><input class="user-checkbox" type="checkbox"></td>'
             + '<td><input class="user-input user-username" value="{username}"></td>'
-            + '<td><input class="user-input" type="password" value="{password}"></td>'
-            + '<td><input class="user-input" value="{perLV}"></td>'
+            + '<td><input class="user-input user-password" type="password" value="{password}"></td>'
+            + '<td><input class="user-input user-perLV" value="{perLV}"></td>'
             + '<td class="user-status">{status}</td>'
             + '</tr>')
             .replace(/{lineNo}/g, ++trsCount)
@@ -173,6 +204,15 @@ require(['requireAsync'], function (requireAsync) {
         }
         else {
             $tr.find('.user-input').change(function () {
+                //如果改变的是密码，则将密码赋给当前组件，否则将perLV赋值给当前组件
+                if ($(this).hasClass('user-password')) {
+                    this.password = this.value;
+                }
+                else {
+                    this.perLV = this.value;
+                }
+                savedUserTRs.remove(this);
+                updateUserTRs.push(this);
                 $tr.addClass('user-unsave');
                 tr.status = 'update';
                 $tr.find('.user-status').html(statusEnum[tr.status]);
@@ -231,9 +271,91 @@ require(['requireAsync'], function (requireAsync) {
 
     /**
      * 将页面上所有tr中未保存的数据进行保存，提示已保存数量，并提示失败原因
+     * 1、遍历所有新用户tr组件，将数据添加至toInsertUsers
      */
     function saveUsers() {
-        
+        var toInsertUsers = [];
+        var toUpdateUsers = [];
+        var unameReg = /[\d]{4,6}/;
+        var passReg = /[a-zA-Z0-9]{4,12}/
+        var i;
+
+        for (i = 0; i < newUserTRs.length; i++) {
+            var newUserTR = newUserTRs[i];
+            var uname = $(newUserTR).find('.user-username').val();
+            var pass = $(newUserTR).find('.user-password').val();
+            var perLV = $(newUserTR).find('.user-perLV').val();
+            var lineNo = $(newUserTR).find('.user-line-no').html();
+            if (!unameReg.test(uname)) {
+                return toastr.error('行号为 ' + lineNo + ' 的用户名格式错误，请使用4-6位的数字作为用户名', '保存失败');
+            }
+            if (!passReg.test(pass)) {
+                return toastr.error('行号为 ' + lineNo + ' 的密码格式错误，请使用4-12位的数字和字母的组合作为密码', '保存失败');
+            }
+            if (isNaN(perLV)) {
+                return toastr.error('行号为' + lineNo + '权限等级不是数字', '保存失败');
+            }
+            toInsertUsers.push({
+                username: uname,
+                password: pass,
+                perLV: perLV,
+                lineNo: lineNo
+            })
+        }
+
+        for (i = 0; i < updateUserTRs.length; i++) {
+            var upUserTR = updateUserTRs[i];
+            var uname = $(upUserTR).find('.user-username').val();
+            var pass = $(upUserTR).find('.user-password').val();
+            var perLV = $(upUserTR).find('.user-perLV').val();
+            var lineNo = $(upUserTR).find('.user-line-no').html();
+            if (!unameReg.test(uname)) {
+                //TODO: 关闭遮罩层
+                return toastr.error('行号为 ' + lineNo + ' 的用户名格式错误，请使用4-6位的数字作为用户名', '保存失败');
+            }
+            if (!passReg.test(pass)) {
+                //TODO: 关闭遮罩层
+                return toastr.error('行号为 ' + lineNo + ' 的密码格式错误，请使用4-12位的数字和字母的组合作为密码', '保存失败');
+            }
+            if (isNaN(perLV)) {
+                return toastr.error('行号为 ' + lineNo + ' 的权限等级不是数字', '保存失败');
+            }
+            toUpdateUsers.push({
+                username: uname,
+                password: pass,
+                perLV: perLV,
+                lineNo: lineNo
+            })
+        }
+        console.log(toUpdateUsers);
+        return $.ajax({
+            url: '/main/group/saveUsers',
+            type: 'POST',
+            dataType: 'json',
+            timeout: ajaxTimeout,
+            data: { toInsert: toInsertUsers, toUpdate: toUpdateUsers },
+            error: function (status, xhr) {
+                toastr.error('失败，详情请使用f12打开工具查看错误提示', '保存用户');
+                console.error('保存用户失败', xhr, status);
+            },
+            success: function (ret, status) {
+                var successStr = '';
+                var errorStr = '';
+                for (var i = 0; i < ret.savedUsers.length; i++) {
+                    var user = ret.savedUsers[i];
+                    var $tr = $('#tblUsers>tbody>tr').eq(user.lineNo - 1);
+                    successStr += user.formatString({ lineNo: '行号', username: '用户名' }) + '\r\n';
+                    $tr.removeClass('user-unsave');
+                    $tr.find('.user-status').html('已保存');
+                }
+                for (var i = 0; i < ret.failedUsers.length; i++) {
+                    errorStr += ret.failedUsers[i].formatString({ lineNo: '行号', username: '用户名', errMsg: '错误信息' }) + '\r\n';
+                }
+                toastr.success('此次保存成功的数据一共' + ret.savedUsers.length + '条。分别为\r\n' + successStr, '保存成功');
+                toastr.error('此次保存失败的数据一共' + ret.failedUsers.length + '条，请按下f12进入工具查看', '保存失败');
+                console.error('保存失败', errorStr);
+            }
+        })
     }
 
 
