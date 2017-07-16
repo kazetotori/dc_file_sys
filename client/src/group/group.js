@@ -15,7 +15,7 @@ require.config({
 require(['requireAsync'], function (requireAsync) {
     "use strict";
     //页面全局变量
-    var $, bootstrap, FastClick, Cookie, toastr, editable;
+    var $, bootstrap, FastClick, Cookie, toastr;
     var ajaxTimeout = 10000;
     var savedUserTRs = [];
     var updateUserTRs = [];
@@ -36,9 +36,6 @@ require(['requireAsync'], function (requireAsync) {
         bootstrap = modules[0];
         Cookie = modules[1];
         toastr = modules[2];
-        return requireAsync('editable');
-    }).then(function (modules) {
-        editable = modules[0];
     }).then(function () {
         $(main);
     })

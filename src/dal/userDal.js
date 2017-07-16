@@ -1,4 +1,3 @@
-"use strict";
 const pool = require('./../sql/dbPool');
 const groupDal = require('./groupDal');
 const utils = require('./../utils/utils');
